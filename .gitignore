@@ -7,3 +7,5 @@ src/**.js
 coverage
 *.log
 yarn.lock
+.vscode
+.DS_Store
