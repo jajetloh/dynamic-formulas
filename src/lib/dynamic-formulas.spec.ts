@@ -46,7 +46,7 @@ test('solveEquations', (t) => {
 
 test('DynamicFormulaSolver', (t) => {
     const solver = new DynamicFormulaSolver(
-        { a: { name: 'a' }, b: { name: 'b' }, c: { name: 'c' }, d: { name: 'd' }, e: { name: 'e' }, f: { name: 'f' } },
+        ['a', 'b', 'c', 'd', 'e', 'f'],
         TEST_EQUATIONS,
         4,
     )

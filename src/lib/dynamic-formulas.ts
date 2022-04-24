@@ -1,7 +1,3 @@
-interface Variable {
-    name: string
-}
-
 export interface Equation {
     name: string
     variables: string[]
@@ -20,24 +16,24 @@ export interface SolverVariable {
     fieldValue: number | null
 }
 
-interface SolverResult {
+export interface SolverResult {
     variables: { [k: string]: SolverVariable }
     warnings: SolverWarning[]
 }
 
 export class DynamicFormulaSolver {
 
-    constructor(
-        private readonly variables: { [k: string]: Variable },
-        private equations: Equation[],
-        private degreesOfFreedom: number,
+    public constructor(
+        private readonly variables: string[],
+        private readonly equations: Equation[],
+        private readonly degreesOfFreedom: number,
     ) {
         this.validateInputs()
     }
 
     private validateInputs() { }
 
-    refreshNumbers(lockedValues: { [k: string]: number }, lastChanged?: [string, number]): SolverResult {
+    public refreshNumbers(lockedValues: { [k: string]: number }, lastChanged?: [string, number]): SolverResult {
         let results = solveEquations(this.equations, lockedValues)
 
         const valuesForcedByLockValues = Object.entries(results)
@@ -56,7 +52,7 @@ export class DynamicFormulaSolver {
         const maxLocksReached = Object.keys(lockedValues).length >= this.degreesOfFreedom - 1
 
         return {
-            variables: Object.keys(this.variables).map(v => [
+            variables: this.variables.map(v => [
                 v,
                 {
                     checkValue: v in lockedValues,
