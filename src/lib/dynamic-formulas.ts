@@ -1,7 +1,7 @@
 export interface Equation {
     name: string
     variables: string[]
-    equations: { [varName: string]: (x: any) => number }
+    eqArrangements: { [varName: string]: (x: any) => number }
 }
 
 interface SolverWarning {
@@ -77,7 +77,7 @@ export function solveEquations(equations: Equation[], inputs: { [k: string]: num
             const unknowns = eqn.variables.filter((v: string) => !(v in results))
             if (unknowns.length === 1) {
                 const vNew: string = unknowns[0]
-                results[vNew] = (eqn as any).equations[vNew](results)
+                results[vNew] = eqn.eqArrangements[vNew](results)
             }
         })
         knownCount = Object.keys(results).length
@@ -85,4 +85,44 @@ export function solveEquations(equations: Equation[], inputs: { [k: string]: num
         counter++
     }
     return results
+}
+
+export interface EquationValidationResult {
+    isValid: boolean,
+    equations: {
+        name: string,
+        variables: string[],
+        variablesInArrangementsValid: boolean,
+        eqArrangement: { [k: string]: number },
+        eqArrangementsValid: { [k: string]: boolean },
+    }[]
+}
+
+export function validateEquations(equations: Equation[], inputs: { [k: string]: number }): EquationValidationResult {
+    const equationResults: EquationValidationResult = {
+        isValid: false,
+        equations: [],
+    }
+    equations.forEach(eqn => {
+        const [valuesFromEquations, correctValues]: [{ [k: string]: number }, { [k: string]: boolean }] = eqn.variables.map(k => [k, eqn.eqArrangements[k]]).reduce((acc, [k, fn]: [string, (x: any) => number]) => {
+            const filteredInputs = Object.entries(inputs).filter(([k, _]) => eqn.variables.includes(k)).reduce((acc, [k, v]) => { acc[k] = v; return acc }, {})
+            acc[0][k] = fn(filteredInputs)
+            acc[1][k] = Math.abs(acc[0][k] - inputs[k]) <= 1e-5
+            return acc
+        }, [{}, {}])
+        const variablesInArrangementsValid = Object.keys(eqn.eqArrangements).every(k => eqn.variables.includes(k))
+        equationResults.equations.push({
+            name: eqn.name,
+            variables: eqn.variables,
+            variablesInArrangementsValid,
+            eqArrangement: valuesFromEquations,
+            eqArrangementsValid: correctValues,
+        })
+    })
+
+    if (equationResults.equations.every(eqnResult => Object.values(eqnResult.eqArrangementsValid).every(x => x) && eqnResult.variablesInArrangementsValid)) {
+        equationResults.isValid = true
+    }
+
+    return equationResults
 }
