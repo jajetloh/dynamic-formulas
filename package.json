@@ -1,6 +1,6 @@
 {
   "name": "dynamic-formulas",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library for solving multivariate equations from simpler relations between variables.",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
