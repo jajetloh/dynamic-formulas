@@ -10,3 +10,4 @@ yarn.lock
 .vscode
 .DS_Store
 .cspell.json
+other-info.md
