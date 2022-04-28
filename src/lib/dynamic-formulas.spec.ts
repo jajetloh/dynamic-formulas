@@ -26,7 +26,7 @@ const TEST_EQUATIONS: Equation[] = [
     },
 ]
 
-test('solveEquations', (t) => {
+test('solveEquations should give the correct output values for given input values and equations', (t) => {
     const equations: Equation[] = TEST_EQUATIONS
     const inputs = {
         e: 3,
@@ -46,7 +46,7 @@ test('solveEquations', (t) => {
     t.deepEqual(result, expectedResult)
 })
 
-test('DynamicFormulaSolver', (t) => {
+test('DynamicFormulaSolver.refreshNumbers should give the proper outputs in the case of sufficient locked values, and one soft value', (t) => {
     const solver = new DynamicFormulaSolver(
         ['a', 'b', 'c', 'd', 'e', 'f'],
         TEST_EQUATIONS,
@@ -57,7 +57,7 @@ test('DynamicFormulaSolver', (t) => {
         e: 3,
         f: 5,
         b: 2,
-    }, ['c', 6])
+    }, [['c', 6]])
 
     const expectedVariables: { [k: string]: SolverVariable } = {
         a: {
@@ -100,6 +100,76 @@ test('DynamicFormulaSolver', (t) => {
 
     t.deepEqual(result.variables, expectedVariables)
 })
+
+test('DynamicFormulaSolver.refreshNumbers should handle the case of multiple soft values', (t) => {
+    const solver = new DynamicFormulaSolver(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        TEST_EQUATIONS,
+        4,
+    )
+
+    const result = solver.refreshNumbers({
+        e: 3,
+        f: 5,
+    }, [['a', -100], ['b', 1], ['c', 2], ['d', 3]])
+
+    const expectedVariables: { [k: string]: SolverVariable } = {
+        a: {
+            checkValue: false,
+            checkDisabled: true,
+            fieldValue: 15,
+            fieldDisabled: true,
+        },
+        b: {
+            checkValue: false,
+            checkDisabled: false,
+            fieldValue: 1,
+            fieldDisabled: false,
+        },
+        c: {
+            checkValue: false,
+            checkDisabled: false,
+            fieldValue: 2,
+            fieldDisabled: false,
+        },
+        d: {
+            checkValue: false,
+            checkDisabled: false,
+            fieldValue: 12,
+            fieldDisabled: false,
+        },
+        e: {
+            checkValue: true,
+            checkDisabled: false,
+            fieldValue: 3,
+            fieldDisabled: false,
+        },
+        f: {
+            checkValue: true,
+            checkDisabled: false,
+            fieldValue: 5,
+            fieldDisabled: false,
+        },
+    }
+
+    t.deepEqual(result.variables, expectedVariables)
+})
+
+test('DynamicFormulaSolver.refreshNumbers should throw error if given an undeclared variable name', (t) => {
+    const solver = new DynamicFormulaSolver(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        TEST_EQUATIONS,
+        4,
+    )
+
+    t.throws(() => solver.refreshNumbers({
+        e: 3,
+        f: 5,
+        x: 10,
+    }, [['a', -100], ['b', 1], ['c', 2], ['d', 3]]))
+})
+
+
 
 test('validateEquations should detect when equations are consistent for a set of given inputs', (t) => {
     const equations: Equation[] = TEST_EQUATIONS

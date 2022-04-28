@@ -34,16 +34,37 @@ export class DynamicFormulaSolver {
 
     private validateInputs() { }
 
-    public refreshNumbers(lockedValues: { [k: string]: number }, lastChanged?: [string, number]): SolverResult {
+    /**
+     * @param lockedValues refers to variables whose values are known, and all other variables are calculated assuming these locked values.
+     * @param softValues refers to variables which we only want to assume if they cannot be calculated from locked values. These are used after an initial attempt with only locked values.
+     * @returns object which maps variable names to their solved values
+     */
+    public refreshNumbers(lockedValues: { [k: string]: number }, softValues: [string, number][]): SolverResult {
+
+        const badVariableNames = [...Object.entries(lockedValues), ...softValues].filter(([k, _]) => !this.variables.includes(k))
+        if (badVariableNames.length > 0) {
+            throw new Error(`Undeclared variables found in inputs: ${badVariableNames}`)
+        }
+
         let results = solveEquations(this.equations, lockedValues)
 
         const valuesForcedByLockValues = Object.entries(results)
             .filter(([k, _]) => !(k in lockedValues))
             .reduce((acc, [k, v]: [string, number]) => { acc[k] = v; return acc }, {} as { [k: string]: number })
 
-        if (lastChanged) {
-            const [changedVar, changedValue] = lastChanged
-            results = solveEquations(this.equations, { ...results, [changedVar]: changedValue })
+        if (softValues.length > 0) {
+            let validSoftValues = softValues.filter(([k, _]) => !(k in results))
+            let iterCounter = 0
+            while (true) {
+                const [softVarName, softVarValue] = validSoftValues[0]
+                results = solveEquations(this.equations, { ...results, [softVarName]: softVarValue })
+                validSoftValues = softValues.filter(([k, _]) => !(k in results))
+                if (validSoftValues.length <= 0) break
+                iterCounter++
+                if (iterCounter > 100) {
+                    throw new Error('Maximum iteration depth for soft values reached. Something probably went wrong.')
+                }
+            }
         }
 
         const forcedValuesAll = Object.entries(results)
